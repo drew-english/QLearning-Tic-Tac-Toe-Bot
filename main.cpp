@@ -4,7 +4,7 @@ int main(int argc, char *argv[])
 {
    TicTacToe game;
 
-   game.printBoard();
+   game.run();
    system("pause");
 
    return 0;
