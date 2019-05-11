@@ -2,10 +2,10 @@
 
 int main(int argc, char *argv[])
 {
-   TicTacToe game;
+    TicTacToe game;
 
-   game.run();
-   system("pause");
+    game.run();
+    system("pause");
 
-   return 0;
+    return 0;
 }
