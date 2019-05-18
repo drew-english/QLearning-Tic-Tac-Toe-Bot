@@ -32,12 +32,18 @@ public:
     void fit(vector<double> &input, vector<double> const &target); //Updates the weights of the nework based on the paramters
     void save(char const location[]);
     void load(char const location[]);
+    
+    //takes multiple inputs and outputs the performs a batch update
+    void batch_fit(vector<vector<double>> &input, vector<vector<double>> const &target);
 
 private:
     int inputs, hiddenLayers, numHidden, outputs, totalWeights; // total # of each value
     vector<double> cache, hiddenNeurons, weights; // stores real values of each
     double(*actFunOut)(double x); // neuron activation function for the output
     double(*actFunHidden)(double x); // neuron activation function of the hidden layers
+
+    // gets the weight updates for input and target output then returns them
+    void weight_updates(vector<double> &init, vector<double> &input, vector<double> const &target);
 };
 
 typedef double (*Function)(double x);

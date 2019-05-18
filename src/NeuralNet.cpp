@@ -116,15 +116,17 @@ vector<double> Network::run(vector<double> const &input){
   return output;
 }
 
-void Network::fit(vector<double> &input, vector<double> const &target){
+
+//init must be size of totalWeights, weight updates will be added to this vector
+void Network::weight_updates(vector<double> &init, vector<double> &input, vector<double> const &target){
     try { // checking for errors in input or target sizes
-        if((int)input.size() != this->inputs)
+        if ((int)input.size() != this->inputs)
             throw("Invalid input size");
-        if((int)target.size() != this->outputs)
+        if ((int)target.size() != this->outputs)
             throw("Invalid target size");
     }
-    catch(const char *msg)
-    { cerr << "Error While Fitting Network: " << msg << endl;  }
+    catch (const char *msg)
+    { cerr << "Error While Fitting Network: " << msg << endl; }
 
     // run the network with input parameter to compare to target out
     vector<double> o = this->run(input);
@@ -137,16 +139,17 @@ void Network::fit(vector<double> &input, vector<double> const &target){
         for (int i = 0; i < this->hiddenLayers * this->numHidden; i++)
             h.push_back(this->hiddenNeurons[i]);
     }
-    else 
-    { h = hiddenNeurons;  } // h is still used for calculations
-    if(this->actFunOut == relu){
-        for(int i = 0; i < this->outputs; i++)
+    else {
+        h = hiddenNeurons;
+    } // h is still used for calculations
+    if (this->actFunOut == relu){
+        for (int i = 0; i < this->outputs; i++)
             o[i] = unrelu(o[i]);
     }
 
     //sets the derivative needed for activation functions of hidden and output
-    double(*dOut)(double x);
-    double(*dHidden)(double x);
+    double (*dOut)(double x);
+    double (*dHidden)(double x);
     if (this->actFunHidden == relu)
         dHidden = d_relu;
     if (this->actFunHidden == sigmoid)
@@ -167,63 +170,62 @@ void Network::fit(vector<double> &input, vector<double> const &target){
     }
 
     //calculate deltas for hidden layers if any
-	for (int i = this->hiddenLayers; i > 0; i--){
-		//finds first weight and delta in next layer
-		w = this->weights.begin() + ((this->inputs + 1) * this->numHidden) + ((this->numHidden + 1) * this->numHidden * (i - 1)) + 1;
-		d = delta.begin() + (this->numHidden * i);
+    for (int i = this->hiddenLayers; i > 0; i--){
+        //finds first weight and delta in next layer
+        w = this->weights.begin() + ((this->inputs + 1) * this->numHidden) + ((this->numHidden + 1) * this->numHidden * (i - 1)) + 1;
+        d = delta.begin() + (this->numHidden * i);
 
-		for (int j = 0; j < this->numHidden; j++){
-			delta[this->numHidden * (i - 1) + j] = 0;
+        for (int j = 0; j < this->numHidden; j++){
+            delta[this->numHidden * (i - 1) + j] = 0;
 
-			for (int k = 0; k < (i == this->hiddenLayers ? this->outputs : this->numHidden); k++){
-				delta[this->numHidden * (i - 1) + j] += w[(this->numHidden + 1) * k + j] * d[k];
-			}
+            for (int k = 0; k < (i == this->hiddenLayers ? this->outputs : this->numHidden); k++){
+                delta[this->numHidden * (i - 1) + j] += w[(this->numHidden + 1) * k + j] * d[k];
+            }
 
-			//doing this calculation now to keep hidden all deltas in the same format
-			//(makes it easier when changing weights)
-			delta[this->numHidden * (i - 1) + j] *= dHidden(h[j]);
-		}
-	}
+            //doing this calculation now to keep hidden all deltas in the same format
+            //(makes it easier when changing weights)
+            delta[this->numHidden * (i - 1) + j] *= dHidden(h[j]);
+        }
+    }
 
     /* updating weights to output layer */
 
-	//first weight (and cache) (starting with the bias) to the first delta in output layer
-    w = this->weights.begin() + (this->hiddenLayers ? this->outputs * this->numHidden + this->numHidden * this->hiddenLayers : 0);
+    //first weight (and cache) (starting with the bias) to the first delta in output layer
+    w = init.begin() + (this->hiddenLayers ? this->outputs * this->numHidden + this->numHidden * this->hiddenLayers : 0);
 
-	cache = this->cache.begin() + (this->hiddenLayers ? this->outputs * this->numHidden + this->numHidden * this->hiddenLayers : 0);
+    cache = this->cache.begin() + (this->hiddenLayers ? this->outputs * this->numHidden + this->numHidden * this->hiddenLayers : 0);
 
-	//first neuron in the previous layer
-	//n = (this->hiddenLayers ? this->hiddenNeurons.begin() + this->numHidden : input.begin());
+    //first neuron in the previous layer
     n = (this->hiddenLayers ? this->hiddenNeurons.begin() + (this->numHidden * (this->hiddenLayers - 1)) : input.begin());
 
     double dx = 0.0;
     for (int i = 0; i < this->outputs; i++){
-		for (int j = 0; j < (this->hiddenLayers ? this->numHidden : this->inputs) + 1; j++){
-			if (j == 0){
-				dx = delta[this->numHidden * this->hiddenLayers + i];
-				//RMSProp calculations with weight update
-				*cache = DECAYRATE * *cache + (1 - DECAYRATE) * pow(dx, 2);
-				*w++ += -LR * dx / (sqrt(*cache++) + EPS);
-			}
-			else{
-				dx = delta[this->numHidden * this->hiddenLayers + i] * n[j - 1];
-				*cache = DECAYRATE * *cache + (1 - DECAYRATE) * pow(dx, 2);
-				*w++ += -LR * dx / (sqrt(*cache++) + EPS);
-			}
-		}
-	}
+        for (int j = 0; j < (this->hiddenLayers ? this->numHidden : this->inputs) + 1; j++){
+            if (j == 0){
+                dx = delta[this->numHidden * this->hiddenLayers + i];
+                //RMSProp calculations with weight update
+                *cache = DECAYRATE * *cache + (1 - DECAYRATE) * pow(dx, 2);
+                *w++ += -LR * dx / (sqrt(*cache++) + EPS);
+            }
+            else{
+                dx = delta[this->numHidden * this->hiddenLayers + i] * n[j - 1];
+                *cache = DECAYRATE * *cache + (1 - DECAYRATE) * pow(dx, 2);
+                *w++ += -LR * dx / (sqrt(*cache++) + EPS);
+            }
+        }
+    }
 
-  /* updating weights to hidden layers if any */
+    /* updating weights to hidden layers if any */
 
     for (int i = this->hiddenLayers; i > 0; i--){
         //first weight (and cache) (starting with bias) to the delta in current layer
-        w = this->weights.begin() + ((i == 1 ? 0 : 1) * (this->inputs + 1) * this->numHidden) +
+        w = init.begin() + ((i == 1 ? 0 : 1) * (this->inputs + 1) * this->numHidden) +
             ((i == 1 ? 0 : i - 2) * (this->numHidden + 1) * this->numHidden);
 
         cache = this->cache.begin() + ((i == 1 ? 0 : 1) * (this->inputs + 1) * this->numHidden) +
                 ((i == 1 ? 0 : i - 2) * (this->numHidden + 1) * this->numHidden);
+                
         //first neuron in previous layer
-        //n = (i == 1 ? input.begin() : this->hiddenNeurons.begin() + (this->numHidden * (i - 1)));
         n = (i == 1 ? input.begin() : this->hiddenNeurons.begin() + (this->numHidden * (i - 2)));
 
         for (int j = 0; j < this->numHidden; j++){
@@ -233,13 +235,26 @@ void Network::fit(vector<double> &input, vector<double> const &target){
                     *cache = DECAYRATE * *cache + (1 - DECAYRATE) * pow(dx, 2);
                     *w++ += -LR * dx / (sqrt(*cache++) + EPS);
                 }
-                else {
+                else{
                     dx = delta[this->numHidden * (i - 1) + j] * n[k - 1];
                     *cache = DECAYRATE * *cache + (1 - DECAYRATE) * pow(dx, 2);
                     *w++ += -LR * dx / (sqrt(*cache++) + EPS);
                 }
             }
         }
+    }
+}   
+
+
+void Network::fit(vector<double> &input, vector<double> const &target){
+    weight_updates(this->weights, input, target);
+}
+
+void Network::batch_fit(vector<vector<double>> &input, vector<vector<double>> const &target){
+    vector<double> updates(this->totalWeights, 0);
+    
+    for(int i = 0; i < input.size(); i++){
+        weight_updates(updates, input[i], target[i]);
     }
 }
 
