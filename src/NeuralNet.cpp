@@ -247,14 +247,18 @@ void Network::weight_updates(vector<double> &init, vector<double> &input, vector
 
 
 void Network::fit(vector<double> &input, vector<double> const &target){
-    weight_updates(this->weights, input, target);
+    weight_updates(this->weights, input, target); // weight_updates directly change the weights
 }
 
 void Network::batch_fit(vector<vector<double>> &input, vector<vector<double>> const &target){
     vector<double> updates(this->totalWeights, 0);
     
     for(int i = 0; i < input.size(); i++){
-        weight_updates(updates, input[i], target[i]);
+        weight_updates(updates, input[i], target[i]); // summation of weight updates from all inputs
+    }
+
+    for(int i = 0; i < this->totalWeights; i++){
+        this->weights[i] += updates[i]; // updates weights with accumulated weight updates
     }
 }
 
