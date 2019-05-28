@@ -11,9 +11,9 @@ void inthand(int signum){
     stop = 1;
 }
 
-#define EPISODES 100
+#define EPISODES 25
 #define GAMES 100 // # of games per episode
-#define GAMMA .95 // discount rate of future rewards
+#define GAMMA .6 // discount rate of future rewards
 
 using std::vector;
 using std::cout;
@@ -47,14 +47,15 @@ namespace QLearning{
     //Takes a mini batch of transitions, finds targets then fits to the network
     void network_fit(Network &net, vector<Transition> &miniBatch){
         vector<vector <double>> input, tout;
-        vector<double> target(9);
+        vector<double> target;
 
         for(int i = 0; i < miniBatch.size(); i++){
             Transition t = miniBatch[i];
             input.push_back(t.state);
             
             target = t.qvals;
-            target[t.action] = t.reward == 10 ? t.reward : t.reward + argmax(net.run(t.nextState)); // terminal state if reward is 10
+            vector<double> qvals = net.run(t.nextState);
+            target[t.action] = t.reward == 10 ? t.reward : t.reward + GAMMA * qvals[argmax(qvals)]; // terminal state if reward is 10
             tout.push_back(target);
         }
 
@@ -202,6 +203,54 @@ namespace QLearning{
             cout << "\t" << i + 1 << "\t\t" << ((double)winsNN / GAMES) * 100 << "%\t\t" << ((double)winsRand / GAMES) * 100 
                 << "%\t\t" << ((double)draws / GAMES) * 100 << "%" << endl;
         }
+    }
+
+    void playGame(Network &net){
+        TicTacToe game;
+        int player = 0;
+        
+        while(true){
+            system("cls");
+            game.printBoard(); // show user the current board
+            cout << endl;
+
+            //Network's turn
+            vector<double> qvals = net.run(QLearning::get_input(game));
+            int move = QLearning::argmax(qvals) + 1;
+            game.makeMove(move);
+            if(game.checkWin()){ // if there is a winner then break the game loop, else next move
+                player = 1;
+                break;
+            }
+            else
+                game.nextTurn();
+
+
+            system("cls");
+            
+            game.printBoard(); // show user the current board
+            cout << endl;
+            for(int i = 0; i < 9; i++){
+                cout << qvals[i] << endl;
+            }
+            //Player's turn
+            move = game.getMove(); // get a move 
+            while(!game.makeMove(move)){ // validate space is open (make the move if it is)
+                cout << "Move Invalid: space is occupied" << endl << endl;
+                move = game.getMove();
+            }
+
+            if(game.checkWin()) // if there is a winner then break the game loop, else next move
+                break;
+            else
+                game.nextTurn();
+        }
+
+        //prints out winning game board and which player wins
+        system("cls");
+        game.printBoard();
+        cout << endl << endl << "PLAYER " <<
+        (player == 1 ? "1 " : "2 ") << "WINS!!" << endl;
     }
 
 }

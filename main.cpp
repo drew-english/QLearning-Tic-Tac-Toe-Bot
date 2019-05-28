@@ -7,10 +7,14 @@ using std::cout;
 
 int main(int argc, char *argv[])
 {
-    Network net(27, 1, 243, 9, relu, linear);
+    // Network net(27, 1, 243, 9, relu, linear);
 
-    QLearning::run(net);
-    net.save("Saves/NetworkSave.data");
+    // QLearning::run(net);
+    // net.save("Saves/NetworkSave.data");
+
+    Network net("Saves/NetworkSave.data");
+
+    QLearning::playGame(net);
 
     return 0;
 }
