@@ -16,7 +16,7 @@ using std::fstream;
 using std::string;
 
 //parameters for updating weights (uses RMSProp algorithm)
-#define LR .01
+#define LR .001
 #define DECAYRATE .9
 #define EPS .000001
 

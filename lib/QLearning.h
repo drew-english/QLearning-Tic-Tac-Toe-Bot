@@ -13,7 +13,15 @@ void inthand(int signum){
 
 #define EPISODES 25
 #define GAMES 100 // # of games per episode
-#define GAMMA .6 // discount rate of future rewards
+#define GAMMA .9 // discount rate of future rewards
+
+/*Things to look at:
+ * cache updates (in a batch they update during instead of after like the weights)
+ * Changing the rewards to be more drastic
+ * Reward for losses?
+ * Change target for all moves, not just the recorded move 
+ * Batch size
+*/
 
 using std::vector;
 using std::cout;
