@@ -191,9 +191,11 @@ void Network::weight_updates(vector<double> &init, vector<double> &input, vector
     /* updating weights to output layer */
 
     //first weight (and cache) (starting with the bias) to the first delta in output layer
-    w = init.begin() + (this->hiddenLayers ? this->inputs * this->numHidden + this->numHidden * this->hiddenLayers : 0);
+    w = init.begin() + (this->hiddenLayers ? (this->inputs + 1) * this->numHidden + 
+        (this->numHidden + 1) * this->numHidden * (this->hiddenLayers - 1) : 0);
 
-    cache = this->cache.begin() + (this->hiddenLayers ? this->inputs * this->numHidden + this->numHidden * this->hiddenLayers : 0);
+    cache = this->cache.begin() + (this->hiddenLayers ? (this->inputs + 1) * this->numHidden + 
+        (this->numHidden + 1) * this->numHidden * (this->hiddenLayers - 1) : 0);
 
     //first neuron in the previous layer
     n = (this->hiddenLayers ? this->hiddenNeurons.begin() + (this->numHidden * (this->hiddenLayers - 1)) : input.begin());
