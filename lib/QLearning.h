@@ -11,7 +11,7 @@ void inthand(int signum){
     stop = 1;
 }
 
-#define EPISODES 25
+#define EPISODES 100
 #define GAMES 100 // # of games per episode
 #define GAMMA .9 // discount rate of future rewards
 
@@ -117,6 +117,7 @@ namespace QLearning{
         for(int i = 0; i < x.size(); i++){
             if(x[i] == target)
                 x.erase(x.begin() + i);
+                return;
         }
     }
 
