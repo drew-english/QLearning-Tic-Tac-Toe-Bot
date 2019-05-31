@@ -133,11 +133,11 @@ void Network::weight_updates(vector<double> &init, vector<double> &input, vector
     vector<double>::iterator w, d, cache, n;
 
     //making a copy of hidden neuron values for the case of the hidden activation being relu
-    //as both the unrelu and relu values of the hidden neurons are needed
+    //as both the unrelu and relu values of the hidden neurons are needed (easier to do derivative)
     vector<double> h;
     if (this->hiddenLayers > 0 && this->actFunHidden == relu){
         for (int i = 0; i < this->hiddenLayers * this->numHidden; i++)
-            h.push_back(this->hiddenNeurons[i]);
+            h.push_back(unrelu(this->hiddenNeurons[i]));
     }
     else {
         h = hiddenNeurons;
@@ -163,6 +163,10 @@ void Network::weight_updates(vector<double> &init, vector<double> &input, vector
     if (this->actFunOut == relu)
         dOut = d_relu;
 
+    
+    //delta is set up so that hidden layer neurons comes first,
+    //then any other hidden layer's neurons, then output neurons last
+
     //calculate deltas for output layer
     vector<double> delta(this->hiddenLayers * this->numHidden + this->outputs);
     for (int i = 0; i < this->outputs; i++){
@@ -184,7 +188,7 @@ void Network::weight_updates(vector<double> &init, vector<double> &input, vector
 
             //doing this calculation now to keep hidden all deltas in the same format
             //(makes it easier when changing weights)
-            delta[this->numHidden * (i - 1) + j] *= dHidden(h[j]);
+            delta[this->numHidden * (i - 1) + j] *= dHidden(h[this->numHidden * (i - 1) + j]);
         }
     }
 
