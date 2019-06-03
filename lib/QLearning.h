@@ -17,10 +17,10 @@ void inthand(int signum){
 
 /*Things to look at:
  * cache updates (in a batch they update during instead of after like the weights)
- * Changing the rewards to be more drastic
- * Reward for losses?
  * Change target for all moves, not just the recorded move 
  * Batch size
+ * Only choose valid moves
+ * TODO: Fix choosing random moves by network (will mostly choose invalid moves)
 */
 
 using std::vector;
@@ -71,10 +71,43 @@ namespace QLearning{
     }
 
 
+    //erases element in vector if found
+    void erase(vector<int> &x, int target){
+        for (int i = 0; i < x.size(); i++){
+            if (x[i] == target){
+                x.erase(x.begin() + i);
+                return;
+            }
+        }
+    }
+
+
+    //picks an action based on the qvalues and possible moves
+    // Passing avals by value becuase we are making changes we do not want to keep later
+    int pick_action(vector<double> avals, vector<int> &possMoves){
+        vector<int> moves = {0, 1, 2, 3, 4, 5, 6, 7, 8};
+        
+        //removes valid moves from 'moves', leaving only invalid ones
+        for(int i = 0; i < possMoves.size(); i++){
+            QLearning::erase(moves, possMoves[i]);
+        }
+
+        //set aval of invalid moves to -5000 so we do not select an invalid move
+        for(int i = 0; i < moves.size(); i++){
+            avals[moves[i]] = -5000;
+        }
+
+        int action = QLearning::argmax(avals); //find action
+        QLearning::erase(possMoves, action); //update possMoves
+        return action;
+    }
+
+
     //Makes a move based on action and retruns the reward
     int make_move(TicTacToe &game, int action){
-        int reward = -5; // start by assuming the move we made was invalid
+        int reward;
 
+        // Will always be able to make a move becuase we only pick valid moves
         if(game.makeMove(action + 1)){
             if(game.checkWin())
                 reward = 10; // if we win
@@ -112,23 +145,14 @@ namespace QLearning{
     }
 
 
-    //erases element in vector if found
-    void erase(vector<int> &x, int target){
-        for(int i = 0; i < x.size(); i++){
-            if(x[i] == target)
-                x.erase(x.begin() + i);
-                return;
-        }
-    }
-
 
     void run(Network &net){
         srand(time(NULL)); // initializes random seed
 
         //game independent variables
         double eps = 1; // for e-greedy selection (from 1 to .1, then stays at .1)
-        int minibatchSize = 16; // mini batch sample size from the replays
-        int replaySize = 64;
+        int minibatchSize = 8; // mini batch sample size from the replays
+        int replaySize = 128;
         vector<Transition> replays, miniBatch(minibatchSize);
         int moves = 0; // total number of moves so far by the network (for replay rewriting)
 
@@ -153,13 +177,11 @@ namespace QLearning{
                     if((double)rand() / (double)RAND_MAX < eps)
                         action = rand() % 9;
                     else 
-                        action = QLearning::argmax(qvals);                    
+                        action = QLearning::pick_action(qvals, possibleMoves);                    
 
                     //Take action, observe reward and new state:
                     reward = QLearning::make_move(game, action);
                     newState = QLearning::get_input(game);
-                    if(reward != -5) 
-                        QLearning::erase(possibleMoves, action); // removes action from possible moves
 
                     //Store transition in replay:
                     Transition t = {state, action, reward, newState, qvals};
@@ -189,7 +211,7 @@ namespace QLearning{
                     //Next players turn (randomly picks place)
                     game.nextTurn();
                     action = possibleMoves[rand() % possibleMoves.size()]; // Player takes turn at random
-                    game.makeMove(action - 1);
+                    game.makeMove(action + 1);
                     QLearning::erase(possibleMoves, action);
                     if (game.checkWin()){ // check to see if random player won
                         winsRand++;
@@ -217,7 +239,8 @@ namespace QLearning{
     void playGame(Network &net){
         TicTacToe game;
         int player = 0;
-        
+        vector<int> possibleMoves = {0, 1, 2, 3, 4, 5, 6, 7, 8}; // possible moves
+
         while(true){
             system("cls");
             game.printBoard(); // show user the current board
@@ -225,7 +248,7 @@ namespace QLearning{
 
             //Network's turn
             vector<double> qvals = net.run(QLearning::get_input(game));
-            int move = QLearning::argmax(qvals) + 1;
+            int move = QLearning::pick_action(qvals, possibleMoves) + 1;
             game.makeMove(move);
             if(game.checkWin()){ // if there is a winner then break the game loop, else next move
                 player = 1;
@@ -248,6 +271,8 @@ namespace QLearning{
                 cout << "Move Invalid: space is occupied" << endl << endl;
                 move = game.getMove();
             }
+
+            QLearning::erase(possibleMoves, move - 1); //update possible moves
 
             if(game.checkWin()) // if there is a winner then break the game loop, else next move
                 break;

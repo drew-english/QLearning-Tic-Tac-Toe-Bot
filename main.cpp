@@ -7,10 +7,10 @@ using std::cout;
 
 int main(int argc, char *argv[])
 {
-    // Network net(27, 1, 243, 9, relu, linear);
+    Network net(27, 2, 108, 9, relu, linear);
 
-    // QLearning::run(net);
-    // net.save("Saves/NetworkSave.data");
+    QLearning::run(net);
+    net.save("Saves/NetworkSave.data");
 
     // Network Testing:
     // vector<double> input = {1, 1, 1, 1};
