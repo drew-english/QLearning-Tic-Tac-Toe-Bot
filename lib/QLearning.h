@@ -17,10 +17,12 @@ void inthand(int signum){
 
 /*Things to look at:
  * cache updates (in a batch they update during instead of after like the weights)
- * Change target for all moves, not just the recorded move 
- * Batch size
- * Only choose valid moves
- * TODO: Fix choosing random moves by network (will mostly choose invalid moves)
+ * TODO:
+ * Next qmax:
+    * Create next Qmax in transition struct
+    * rewrite last move's qmax with the qval of the move selected in this move
+    * USE THE MOVE SELECTED NOT THE MAX (they are different since we pick available moves, not the best score everytime)
+ * Negative reward for losing game
 */
 
 using std::vector;
@@ -110,9 +112,9 @@ namespace QLearning{
         // Will always be able to make a move becuase we only pick valid moves
         if(game.makeMove(action + 1)){
             if(game.checkWin())
-                reward = 10; // if we win
+                reward = 50; // if we win
             else
-                reward = 2; // if we make successful move
+                reward = 5; // if we make successful move
         }
 
         return reward;
@@ -151,7 +153,7 @@ namespace QLearning{
 
         //game independent variables
         double eps = 1; // for e-greedy selection (from 1 to .1, then stays at .1)
-        int minibatchSize = 8; // mini batch sample size from the replays
+        int minibatchSize = 16; // mini batch sample size from the replays
         int replaySize = 128;
         vector<Transition> replays, miniBatch(minibatchSize);
         int moves = 0; // total number of moves so far by the network (for replay rewriting)
@@ -174,8 +176,10 @@ namespace QLearning{
                 while(true){ // runs until game is over                
                     //Select action using e-greedy:
                     qvals = net.run(state);
-                    if((double)rand() / (double)RAND_MAX < eps)
-                        action = rand() % 9;
+                    if((double)rand() / (double)RAND_MAX < eps){
+                        action = possibleMoves[rand() % possibleMoves.size()]; // picks random move from possible moves
+                        QLearning::erase(possibleMoves, action); // updates possible moves
+                    }
                     else 
                         action = QLearning::pick_action(qvals, possibleMoves);                    
 
