@@ -7,9 +7,13 @@ using std::cout;
 
 int main(int argc, char *argv[])
 {
-    Network net(27, 2, 108, 9, relu, linear);
+    srand(time(NULL)); // initializes random seed
 
-    QLearning::run(net);
+    Network net(27, 1, 243, 9, relu, linear);
+    NNPlayer netPlayer(&net, true, 8);
+    RANDPlayer rPlayer;
+
+    QLearning::run(netPlayer, rPlayer);
     net.save("Saves/NetworkSave.data");
 
     // Network Testing:
@@ -36,8 +40,9 @@ int main(int argc, char *argv[])
     //     cout << out[i] << endl;
 
     // Network net("Saves/NetworkSave.data");
+    // NNPlayer netPlayer(&net);
 
-    // QLearning::playGame(net);
+    // QLearning::playGame(netPlayer);
 
     return 0;
 }
