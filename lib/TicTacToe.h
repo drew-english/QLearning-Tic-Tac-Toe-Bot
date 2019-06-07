@@ -18,6 +18,7 @@ public:
     bool makeMove(int pos); // makes a new move with current player based on position argument
     int getMove(); // gets a move from the user
     bool checkWin(); // checks for a win with current player
+    bool checkDraw(); // checks for a draw
    
 private:
     std::vector<int> board; // stores information about the state of the game (1 is X's, 0 is O's, 2 is blank)

@@ -155,3 +155,12 @@ bool TicTacToe::checkWin()
 
     return false; // no win conditions were met
 }
+
+bool TicTacToe::checkDraw(){
+    for(int i = 0; i < this->board.size(); i++){
+        if(board[i] == 2)
+            return false;
+    }
+
+    return true;
+}
