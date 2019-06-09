@@ -102,7 +102,7 @@ int TicTacToe::getMove()
 void TicTacToe::nextTurn()
 {  ++this->curPlayer %= 2;  }
 
-bool TicTacToe::checkWin()
+bool TicTacToe::checkWin(vector<int> board)
 {
     //check along rows:
     // if any value in the row does not belong to the current player then 
@@ -111,7 +111,7 @@ bool TicTacToe::checkWin()
         bool flag = true;
 
         for(int j = 0; j < 3; j++){
-            if(this->board[i+j] != this->curPlayer)
+            if((board.empty() ? this->board : board)[i+j] != this->curPlayer)
                 flag = false;
         }
 
@@ -126,7 +126,7 @@ bool TicTacToe::checkWin()
         bool flag = true;
 
         for(int j = 0; j <= 6; j += 3){
-            if(this->board[i + j] != this->curPlayer)
+            if((board.empty() ? this->board : board)[i + j] != this->curPlayer)
                 flag = false;
         }
 
@@ -139,7 +139,7 @@ bool TicTacToe::checkWin()
     // they have not satisfied the win condition across the diagonal
     bool flag = true;
     for(int i = 0; i <= 8; i += 4){
-        if(this->board[i] != this->curPlayer)
+        if((board.empty() ? this->board : board)[i] != this->curPlayer)
             flag = false;
     }
     if(flag)
@@ -147,7 +147,7 @@ bool TicTacToe::checkWin()
 
     flag = true;
     for (int i = 2; i <= 6; i += 2){
-        if (this->board[i] != this->curPlayer)
+        if ((board.empty() ? this->board : board)[i] != this->curPlayer)
             flag = false;
     }
     if(flag)
@@ -156,9 +156,9 @@ bool TicTacToe::checkWin()
     return false; // no win conditions were met
 }
 
-bool TicTacToe::checkDraw(){
-    for(int i = 0; i < this->board.size(); i++){
-        if(board[i] == 2)
+bool TicTacToe::checkDraw(vector<int> board){
+    for(int i = 0; i < 9; i++){
+        if((board.empty() ? this->board : board)[i] == 2)
             return false;
     }
 
