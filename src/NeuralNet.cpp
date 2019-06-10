@@ -55,7 +55,6 @@ Network::Network(int inputs, int hiddenLayers, int numHidden,
     this->actFunHidden = actHidden;
     this->actFunOut = actOut;
 
-    srand(time(NULL)); // initializes random seed
 	for (int i = 0; i < this->totalWeights; i++){ // randomly setting weights and initializes cache to all 0
 		this->weights.push_back(1 * ((double)rand() / (double)RAND_MAX));
 		if (rand() % 2)
@@ -210,13 +209,13 @@ void Network::weight_updates(vector<double> &init, vector<double> &input, vector
             if (j == 0){
                 dx = delta[this->numHidden * this->hiddenLayers + i];
                 //RMSProp calculations with weight update
-                *cache = DECAYRATE * *cache + (1 - DECAYRATE) * pow(dx, 2);
-                *w++ += -LR * dx / (sqrt(*cache++) + EPS);
+                //*cache = DECAYRATE * *cache + (1 - DECAYRATE) * pow(dx, 2);
+                *w++ += -LR * dx;// / (sqrt(*cache++) + EPS);
             }
             else{
                 dx = delta[this->numHidden * this->hiddenLayers + i] * n[j - 1];
-                *cache = DECAYRATE * *cache + (1 - DECAYRATE) * pow(dx, 2);
-                *w++ += -LR * dx / (sqrt(*cache++) + EPS);
+                //*cache = DECAYRATE * *cache + (1 - DECAYRATE) * pow(dx, 2);
+                *w++ += -LR * dx;// / (sqrt(*cache++) + EPS);
             }
         }
     }
@@ -238,13 +237,13 @@ void Network::weight_updates(vector<double> &init, vector<double> &input, vector
             for (int k = 0; k < (i == 1 ? this->inputs : this->numHidden) + 1; k++){
                 if (k == 0){
                     dx = delta[this->numHidden * (i - 1) + j];
-                    *cache = DECAYRATE * *cache + (1 - DECAYRATE) * pow(dx, 2);
-                    *w++ += -LR * dx / (sqrt(*cache++) + EPS);
+                    //*cache = DECAYRATE * *cache + (1 - DECAYRATE) * pow(dx, 2);
+                    *w++ += -LR * dx;// / (sqrt(*cache++) + EPS);
                 }
                 else{
                     dx = delta[this->numHidden * (i - 1) + j] * n[k - 1];
-                    *cache = DECAYRATE * *cache + (1 - DECAYRATE) * pow(dx, 2);
-                    *w++ += -LR * dx / (sqrt(*cache++) + EPS);
+                    //*cache = DECAYRATE * *cache + (1 - DECAYRATE) * pow(dx, 2);
+                    *w++ += -LR * dx;// / (sqrt(*cache++) + EPS);
                 }
             }
         }
@@ -266,6 +265,10 @@ void Network::batch_fit(vector<vector<double>> &input, vector<vector<double>> co
     for(int i = 0; i < this->totalWeights; i++){
         this->weights[i] += updates[i]; // updates weights with accumulated weight updates
     }
+
+    //reset cache after each batch
+    // this->cache.clear();
+    // this->cache = vector<double> (this->totalWeights, 0);
 }
 
 void Network::save(char const location[])
