@@ -54,7 +54,7 @@ namespace QLearning{
         return false;
     }
 
-    void run(NNPlayer netPlayer, RANDPlayer randPlayer){
+    void run(NNPlayer netPlayer, MINMAXPlayer mmPlayer){
 
         cout << "Episode:\t% NN won:\t% Rand won:\t% Draws:" << endl; // text for displaying % games won each episode
         signal(SIGINT, inthand); // able to break the program with ctrl + c
@@ -73,7 +73,7 @@ namespace QLearning{
                         game.nextTurn();
                     
                     //other Player's move
-                    randPlayer.move(game);
+                    mmPlayer.move(game);
                     if(QLearning::check_end(game, netPlayer, false)){
                         break;
                     }
