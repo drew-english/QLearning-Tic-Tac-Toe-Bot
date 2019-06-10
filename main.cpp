@@ -10,10 +10,10 @@ int main(int argc, char *argv[])
     srand(time(NULL)); // initializes random seed
 
     Network net(27, 1, 243, 9, relu, linear);
-    NNPlayer netPlayer(&net, true, 8);
-    RANDPlayer rPlayer;
+    NNPlayer netPlayer(&net, true);
+    MINMAXPlayer mmp;
 
-    QLearning::run(netPlayer, rPlayer);
+    QLearning::run(netPlayer, mmp);
     net.save("Saves/NetworkSave.data");
 
     // Network Testing:

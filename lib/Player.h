@@ -3,6 +3,9 @@
 
 #include "./NeuralNet.h"
 #include "./TicTacToe.h"
+#include <map>
+
+vector<int> get_moves(TicTacToe &game); // required by players to see the valid moves of a game state
 
 //Defines a transition, used in experience replay for learning
 struct Transition
@@ -18,7 +21,7 @@ struct Transition
 // player class, using a network for moves
 class NNPlayer {
 public:
-    NNPlayer(Network *net, bool training = false, int minibatchSize = 16, int replaySize = 128); // constructor
+    NNPlayer(Network *net, bool training = false, int minibatchSize = 16, int replaySize = 512); // constructor
     ~NNPlayer(); // destructor
 
     void move(TicTacToe &game); // routes move based on training
@@ -53,10 +56,30 @@ private:
 //player class making random moves
 class RANDPlayer {
 public:
-    void move(TicTacToe &game); // makes a move at random based on available moves
+    RANDPlayer();
+    ~RANDPlayer();
 
+    void move(TicTacToe &game); // makes a move at random based on available moves
+};
+
+
+//MinMax player which finds the best possible move for a given board (assuming the other player will also choose their best move)
+// for training against the network
+class MINMAXPlayer {
+public:
+    MINMAXPlayer();
+    ~MINMAXPlayer();
+
+    void move(TicTacToe &game);
 private:
-    vector<double> get_moves(TicTacToe &game);
+    int valWin, valLoss, valDraw, side; // 0 is this players side, 1 is other players side
+    
+    //key is game board, val is the best moves for the game board
+    std::map<vector<int>, vector<vector<int>>> moveCache; // caching values of boards so we do not need to repeat finding values
+
+    //value finding functions
+    vector<int> max(TicTacToe game);
+    vector<int> min(TicTacToe game);
 };
 
 #endif
