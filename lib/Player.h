@@ -18,8 +18,13 @@ struct Transition
     double nextMax = 0;
 };
 
+class Player {
+public:
+    virtual void move(TicTacToe &game) = 0;
+};
+
 // player class, using a network for moves
-class NNPlayer {
+class NNPlayer: public Player {
 public:
     NNPlayer(Network *net, bool training = false, int minibatchSize = 16, int replaySize = 512); // constructor
     ~NNPlayer(); // destructor
@@ -54,7 +59,7 @@ private:
 
 
 //player class making random moves
-class RANDPlayer {
+class RANDPlayer: public Player {
 public:
     RANDPlayer();
     ~RANDPlayer();
@@ -65,7 +70,7 @@ public:
 
 //MinMax player which finds the best possible move for a given board (assuming the other player will also choose their best move)
 // for training against the network
-class MINMAXPlayer {
+class MINMAXPlayer: public Player {
 public:
     MINMAXPlayer();
     ~MINMAXPlayer();

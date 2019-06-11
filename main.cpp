@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
     NNPlayer netPlayer(&net, true);
     MINMAXPlayer mmp;
 
-    QLearning::run(netPlayer, mmp);
+    QLearning::run(netPlayer, &mmp);
     net.save("Saves/NetworkSave.data");
 
     // Network Testing:
