@@ -1,6 +1,6 @@
 #include "../lib/Player.h"
 
-vector<int> get_moves(TicTacToe &game){
+vector<int> Player::get_moves(TicTacToe &game){
     vector<int> board = game.getBoard();
     vector<int> possibleMoves;
 
@@ -38,6 +38,7 @@ NNPlayer::~NNPlayer(){} // no mem manually allocated -> no mem to manually unall
 void NNPlayer::move(TicTacToe &game)
 { training ? train_move(game) : notrain_move(game); }
 
+
 //Gives a normalized network input for a given game
 // First 9 are position of X's, second 9 are positions of O's, and last 9 are position of blanks
 vector<double> NNPlayer::get_input(TicTacToe &game){
@@ -63,29 +64,6 @@ vector<double> NNPlayer::get_input(TicTacToe &game){
     return input;
 }
 
-// vector<double> NNPlayer::get_input(TicTacToe &game){
-//     vector<int> board = game.getBoard();
-//     vector<double> input(27, 0);
-
-//     for(int i = 0; i < board.size(); i++){
-//         switch(board[i]){
-//         case 0:
-//             input[3 * i] = 1;
-//             break;
-//         case 1:
-//             input[(3 * i) + 1] = 1;
-//             break;
-//         case 2:
-//             input[(3 * i) + 2] = 1;
-//             break;
-//         default:
-//             break;
-//         }
-//     }
-
-//     return input;
-// }
-
 
 //returns the probs and updates possible moves (same loop for both)
 vector<double> NNPlayer::get_probs(TicTacToe &game, vector<double> probs, vector<int> &possibleMoves){
@@ -100,6 +78,7 @@ vector<double> NNPlayer::get_probs(TicTacToe &game, vector<double> probs, vector
 
     return probs;
 }
+
 
 //returns the position of the largest value in the vector
 int NNPlayer::argmax(vector<double> const &x){
@@ -116,6 +95,7 @@ int NNPlayer::argmax(vector<double> const &x){
     return pos;
 }
 
+
 // makes a move and returns the reward for that move
 int NNPlayer::execute_move(TicTacToe &game, int action){
     int reward;
@@ -126,6 +106,7 @@ int NNPlayer::execute_move(TicTacToe &game, int action){
 
     return reward;
 }
+
 
 void NNPlayer::network_fit(vector<Transition> const &miniBatch){
     vector<vector<double>> input, tout;
@@ -142,6 +123,7 @@ void NNPlayer::network_fit(vector<Transition> const &miniBatch){
 
     net->batch_fit(input, tout);
 }
+
 
 void NNPlayer::train_move(TicTacToe &game){
     int action, reward;
@@ -188,6 +170,7 @@ void NNPlayer::train_move(TicTacToe &game){
         eps -= (1 - epsMin) / 5000;
 }
 
+
 //picks the move with the highest qval based on the state
 void NNPlayer::notrain_move(TicTacToe &game){
     game.makeMove(argmax(this->net->run(get_input(game))) + 1);
@@ -209,146 +192,7 @@ void NNPlayer::final_reward(int outcome){
     }
 }
 
+
 vector<double> NNPlayer::get_qvals(TicTacToe &game){
     return net->run(get_input(game));
-}
-
-
-
-//RANDPlayer functions:
-
-RANDPlayer::RANDPlayer(){} // do not need to construct anything
-RANDPlayer::~RANDPlayer(){} // do not need to destruct anything
-
-void RANDPlayer::move(TicTacToe &game){    
-    vector<int> possibleMoves = get_moves(game);
-    game.makeMove(possibleMoves[rand() % possibleMoves.size()] + 1); // makes a random move
-}
-
-
-
-//MINMAXPlayer functions:
-
-MINMAXPlayer::MINMAXPlayer(){
-    this->valWin = 1;
-    this->valDraw = 0;
-    this->valLoss = -1;
-    this->side = 0;
-}
-
-MINMAXPlayer::~MINMAXPlayer(){} // do not need to destruct anything
-
-void MINMAXPlayer::move(TicTacToe &game){
-    vector<int> move = max(game); // returns max [score, action] based on game
-    game.makeMove(move[1] + 1);
-}
-
-vector<int> MINMAXPlayer::max(TicTacToe game){
-    vector<vector <int>> bestMoves;
-    vector<int> board = game.getBoard();
-
-    // check if game state is already stored (count can only be 1 or 0)
-    if(this->moveCache.count(board)){ 
-        bestMoves = moveCache[board];
-        return bestMoves[rand() % bestMoves.size()];
-    }
-
-
-    //  check if game instance has already finished
-    if(game.checkWin(board)){ // check for this player's win
-        bestMoves = {{this->valWin, -1}};
-        moveCache[board] = bestMoves;
-        return bestMoves[0];
-    }
-    
-    game.nextTurn(); // switch to other players turn for win checking
-    if(game.checkWin(board)){ // check for other players win
-        bestMoves = {{this->valLoss, -1}};
-        moveCache[board] = bestMoves;
-        return bestMoves[0];
-    }
-    game.nextTurn(); // switch back to this player's turn
-
-
-    // building best moves
-    int maxVal = this->valDraw;
-    int action = -1;
-    bestMoves = {{maxVal, action}}; // set to draw value in case there are 0 possible moves
-    vector<int> possMoves = get_moves(game);
-
-    for(int i = 0; i < possMoves.size(); i++){
-        // create new instance of current game, then execute a possible move
-        TicTacToe g = game;
-        g.makeMove(possMoves[i] + 1);
-
-        vector<int> res = min(g); // find the result of a min for next player
-
-        if(res[0] > maxVal || action == -1){ //overwrite best moves on finding a larger res or the first possible move
-            action = possMoves[i];
-            maxVal = res[0];
-            bestMoves = {{maxVal, action}};
-        }
-        else if(res[0] == maxVal){
-            action = possMoves[i];
-            bestMoves.push_back({maxVal, action});
-        }
-    }
-
-    moveCache[board] = bestMoves;
-    return bestMoves[rand() % bestMoves.size()];
-}
-
-vector<int> MINMAXPlayer::min(TicTacToe game){
-    vector<vector<int>> bestMoves;
-    vector<int> board = game.getBoard();
-
-    // check if game state is already stored (count can only be 1 or 0)
-    if (this->moveCache.count(board)){
-        bestMoves = moveCache[board];
-        return bestMoves[rand() % bestMoves.size()];
-    }
-
-    //  check if game instance has already finished
-    if (game.checkWin(board)){ // check for this player's win
-        bestMoves = {{this->valWin, -1}};
-        moveCache[board] = bestMoves;
-        return bestMoves[0];
-    }
-
-    game.nextTurn(); // switch to other players turn for win checking
-    if (game.checkWin(board)){ // check for other players win
-        bestMoves = {{this->valLoss, -1}};
-        moveCache[board] = bestMoves;
-        return bestMoves[0];
-    }
-    game.nextTurn(); // switch back to this player's turn
-
-    // building best moves
-    int maxVal = this->valDraw;
-    int action = -1;
-    bestMoves = {{maxVal, action}}; // set to draw value in case there are 0 possible moves
-    vector<int> possMoves = get_moves(game);
-
-    for (int i = 0; i < possMoves.size(); i++){
-        // create new instance of current game, then execute a possible move
-        TicTacToe g = game;
-        g.nextTurn(); // other player will be making the turn
-        g.makeMove(possMoves[i] + 1);
-        g.nextTurn(); // resetting to this player's turn
-
-        vector<int> res = max(g); // find the result of a min for next player
-
-        if (res[0] < maxVal || action == -1){ //overwrite best moves on finding a smaller res or the first possible move
-            action = possMoves[i];
-            maxVal = res[0];
-            bestMoves = {{maxVal, action}};
-        }
-        else if (res[0] == maxVal){
-            action = possMoves[i];
-            bestMoves.push_back({maxVal, action});
-        }
-    }
-
-    moveCache[board] = bestMoves;
-    return bestMoves[rand() % bestMoves.size()];
 }
