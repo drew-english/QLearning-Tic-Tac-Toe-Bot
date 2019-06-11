@@ -46,7 +46,7 @@ namespace QLearning{
 
     void run(NNPlayer netPlayer, Player *player){
 
-        cout << "Episode:\t% NN won:\t% Rand won:\t% Draws:" << endl; // text for displaying % games won each episode
+        cout << "Episode:\t% NN won:\t% Other won:\t% Draws:" << endl; // text for displaying % games won each episode
         signal(SIGINT, inthand); // able to break the program with ctrl + c
 
         for(int i = 0; i < EPISODES; i++){

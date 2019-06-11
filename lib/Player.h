@@ -5,8 +5,6 @@
 #include "./TicTacToe.h"
 #include <map>
 
-vector<int> get_moves(TicTacToe &game); // required by players to see the valid moves of a game state
-
 //Defines a transition, used in experience replay for learning
 struct Transition
 {
@@ -18,10 +16,14 @@ struct Transition
     double nextMax = 0;
 };
 
+
+// Base player class, allows for polymorphism
 class Player {
 public:
     virtual void move(TicTacToe &game) = 0;
+    vector<int> get_moves(TicTacToe &game); // required by players to see the valid moves of a game state
 };
+
 
 // player class, using a network for moves
 class NNPlayer: public Player {
