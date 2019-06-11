@@ -15,16 +15,6 @@ void inthand(int signum){
 #define EPISODES 100
 #define GAMES 100 // # of games per episode
 
-/*Things to look at:
- * cache updates (in a batch they update during instead of after like the weights)
- * TODO:
- * Next qmax:
-    * Create next Qmax in transition struct
-    * rewrite last move's qmax with the qval of the move selected in this move
-    * USE THE MOVE SELECTED NOT THE MAX (they are different since we pick available moves, not the best score everytime)
- * Negative reward for losing game
-*/
-
 using std::vector;
 using std::cout;
 
