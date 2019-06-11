@@ -115,21 +115,10 @@ vector<double> Network::run(vector<double> const &input){
   return output;
 }
 
-
-//init must be size of totalWeights, weight updates will be added to this vector
-void Network::weight_updates(vector<double> &init, vector<double> &input, vector<double> const &target){
-    try { // checking for errors in input or target sizes
-        if ((int)input.size() != this->inputs)
-            throw("Invalid input size");
-        if ((int)target.size() != this->outputs)
-            throw("Invalid target size");
-    }
-    catch (const char *msg)
-    { cerr << "Error While Fitting Network: " << msg << endl; }
-
+//Calculates deltas for each neuron (to use in weight updates)
+vector<double> Network::get_deltas(vector<double> &input, vector<double> const &target, vector<double> const &initDelta){
     // run the network with input parameter to compare to target out
     vector<double> o = this->run(input);
-    vector<double>::iterator w, d, cache, n;
 
     //making a copy of hidden neuron values for the case of the hidden activation being relu
     //as both the unrelu and relu values of the hidden neurons are needed (easier to do derivative)
@@ -141,7 +130,8 @@ void Network::weight_updates(vector<double> &init, vector<double> &input, vector
     else {
         h = hiddenNeurons;
     } // h is still used for calculations
-    if (this->actFunOut == relu){
+    if (this->actFunOut == relu)
+    {
         for (int i = 0; i < this->outputs; i++)
             o[i] = unrelu(o[i]);
     }
@@ -162,9 +152,7 @@ void Network::weight_updates(vector<double> &init, vector<double> &input, vector
     if (this->actFunOut == relu)
         dOut = d_relu;
 
-    
-    //delta is set up so that hidden layer neurons comes first,
-    //then any other hidden layer's neurons, then output neurons last
+    vector<double>::iterator w, d;
 
     //calculate deltas for output layer
     vector<double> delta(this->hiddenLayers * this->numHidden + this->outputs);
@@ -191,10 +179,26 @@ void Network::weight_updates(vector<double> &init, vector<double> &input, vector
         }
     }
 
+    if(!initDelta.empty()){
+        for(int i = 0; i < delta.size(); i++)
+            delta[i] += initDelta[i];
+    }
+
+    return delta;
+}
+
+//init must be size of totalWeights, weight updates will be added to this vector
+// Must have deltas before updating weights
+void Network::weight_updates(vector<double> &input, vector<double> const &delta){
+    vector<double>::iterator w, cache, n;
+    
+    //delta is set up so that hidden layer neurons comes first,
+    //then any other hidden layer's neurons, then output neurons last
+
     /* updating weights to output layer */
 
     //first weight (and cache) (starting with the bias) to the first delta in output layer
-    w = init.begin() + (this->hiddenLayers ? (this->inputs + 1) * this->numHidden + 
+    w = this->weights.begin() + (this->hiddenLayers ? (this->inputs + 1) * this->numHidden + 
         (this->numHidden + 1) * this->numHidden * (this->hiddenLayers - 1) : 0);
 
     cache = this->cache.begin() + (this->hiddenLayers ? (this->inputs + 1) * this->numHidden + 
@@ -209,13 +213,13 @@ void Network::weight_updates(vector<double> &init, vector<double> &input, vector
             if (j == 0){
                 dx = delta[this->numHidden * this->hiddenLayers + i];
                 //RMSProp calculations with weight update
-                //*cache = DECAYRATE * *cache + (1 - DECAYRATE) * pow(dx, 2);
-                *w++ += -LR * dx;// / (sqrt(*cache++) + EPS);
+                *cache = DECAYRATE * (*cache) + (1 - DECAYRATE) * pow(dx, 2);
+                *w++ += -LR * dx / (sqrt(*cache++) + EPS);
             }
             else{
                 dx = delta[this->numHidden * this->hiddenLayers + i] * n[j - 1];
-                //*cache = DECAYRATE * *cache + (1 - DECAYRATE) * pow(dx, 2);
-                *w++ += -LR * dx;// / (sqrt(*cache++) + EPS);
+                *cache = DECAYRATE * (*cache) + (1 - DECAYRATE) * pow(dx, 2);
+                *w++ += -LR * dx / (sqrt(*cache++) + EPS);
             }
         }
     }
@@ -224,7 +228,7 @@ void Network::weight_updates(vector<double> &init, vector<double> &input, vector
 
     for (int i = this->hiddenLayers; i > 0; i--){
         //first weight (and cache) (starting with bias) to the delta in current layer
-        w = init.begin() + ((i == 1 ? 0 : 1) * (this->inputs + 1) * this->numHidden) +
+        w = this->weights.begin() + ((i == 1 ? 0 : 1) * (this->inputs + 1) * this->numHidden) +
             ((i == 1 ? 0 : i - 2) * (this->numHidden + 1) * this->numHidden);
 
         cache = this->cache.begin() + ((i == 1 ? 0 : 1) * (this->inputs + 1) * this->numHidden) +
@@ -237,13 +241,13 @@ void Network::weight_updates(vector<double> &init, vector<double> &input, vector
             for (int k = 0; k < (i == 1 ? this->inputs : this->numHidden) + 1; k++){
                 if (k == 0){
                     dx = delta[this->numHidden * (i - 1) + j];
-                    //*cache = DECAYRATE * *cache + (1 - DECAYRATE) * pow(dx, 2);
-                    *w++ += -LR * dx;// / (sqrt(*cache++) + EPS);
+                    *cache = DECAYRATE * (*cache) + (1 - DECAYRATE) * pow(dx, 2);
+                    *w++ += -LR * dx / (sqrt(*cache++) + EPS);
                 }
                 else{
                     dx = delta[this->numHidden * (i - 1) + j] * n[k - 1];
-                    //*cache = DECAYRATE * *cache + (1 - DECAYRATE) * pow(dx, 2);
-                    *w++ += -LR * dx;// / (sqrt(*cache++) + EPS);
+                    *cache = DECAYRATE * (*cache) + (1 - DECAYRATE) * pow(dx, 2);
+                    *w++ += -LR * dx / (sqrt(*cache++) + EPS);
                 }
             }
         }
@@ -252,19 +256,27 @@ void Network::weight_updates(vector<double> &init, vector<double> &input, vector
 
 
 void Network::fit(vector<double> &input, vector<double> const &target){
-    weight_updates(this->weights, input, target); // weight_updates directly change the weights
+    vector<double> delta = get_deltas(input, target);
+    weight_updates(input, delta); // weight_updates directly change the weights
 }
 
 void Network::batch_fit(vector<vector<double>> &input, vector<vector<double>> const &target){
-    vector<double> updates(this->totalWeights, 0);
+    vector<double> deltas(this->hiddenLayers * this->numHidden + this->outputs, 0);
+    vector<double> avgIn(input[0].size(), 0);
     
     for(int i = 0; i < input.size(); i++){
-        weight_updates(updates, input[i], target[i]); // summation of weight updates from all inputs
+        deltas = get_deltas(input[i], target[i], deltas); // summation of deltas from all inputs and targets
+        for(int j = 0; j < input[i].size(); j++)
+            avgIn[j] += input[i][j];
     }
 
-    for(int i = 0; i < this->totalWeights; i++){
-        this->weights[i] += updates[i]; // updates weights with accumulated weight updates
+    for(int i = 0; i < deltas.size(); i++){
+        deltas[i] /= input.size();  // average of each delta
+        if(i < avgIn.size())
+            avgIn[i] /= input.size(); // average input
     }
+
+    weight_updates(avgIn, deltas); // input and target aren't used
 
     //reset cache after each batch
     // this->cache.clear();

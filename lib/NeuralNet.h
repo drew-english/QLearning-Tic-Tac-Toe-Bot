@@ -43,7 +43,10 @@ private:
     double(*actFunHidden)(double x); // neuron activation function of the hidden layers
 
     // gets the weight updates for input and target output then returns them
-    void weight_updates(vector<double> &init, vector<double> &input, vector<double> const &target);
+    void weight_updates(vector<double> &input, vector<double> const &deltas = {});
+
+    //Calculates deltas for each neuron (to use in weight updates)
+    vector<double> get_deltas(vector<double> &input, vector<double> const &target, vector<double> const &initDelta = {});
 };
 
 typedef double (*Function)(double x);
