@@ -22,9 +22,19 @@ double linear(double x)
 double d_linear(double x)
 {	return 1; }
 
+//RMSProp gradient descent optimizer
+double Network::rms_prop(double dx, int index){
+    if(this->vcache.empty()) // initialize the cache if it's empty
+        this->vcache = vector<double>(this->totalWeights, 0);
+    
+    vector<double>::iterator c = vcache.begin() + index; // points to the correct spot in cache
+    *c = DECAYRATE * (*c) + (1 - DECAYRATE) * pow(dx, 2);
+    return -LR * dx / (sqrt(*c) + EPS);
+}
+
 
 Network::Network(int inputs, int hiddenLayers, int numHidden,
-    int outputs, double(*actHidden)(double x), double(*actOut)(double x)){
+    int outputs, double(*actHidden)(double x), double(*actOut)(double x), double(Network::*optimizer)(double dx, int index)){
     //checks to make sure fucntion arguments are valid
     try {
         if (inputs <= 0)
@@ -54,16 +64,29 @@ Network::Network(int inputs, int hiddenLayers, int numHidden,
     this->outputs = outputs;
     this->actFunHidden = actHidden;
     this->actFunOut = actOut;
+    this->optimizer = optimizer;
 
-	for (int i = 0; i < this->totalWeights; i++){ // randomly setting weights and initializes cache to all 0
+    //sets the derivative needed for activation functions of hidden and output
+    if (this->actFunHidden == relu)
+        this->dHidden = d_relu;
+    if (this->actFunHidden == sigmoid)
+        this->dHidden = d_sigmoid;
+    if (this->actFunHidden == linear)
+        this->dHidden = d_linear;
+    if (this->actFunOut == linear)
+        this->dOut = d_linear;
+    if (this->actFunOut == sigmoid)
+        this->dOut = d_sigmoid;
+    if (this->actFunOut == relu)
+        this->dOut = d_relu;
+
+    for (int i = 0; i < this->totalWeights; i++){ // randomly setting weights
 		this->weights.push_back(1 * ((double)rand() / (double)RAND_MAX));
 		if (rand() % 2)
 			this->weights[i] *= -1;
 
         if(i < this->numHidden * this->hiddenLayers)
             this->hiddenNeurons.push_back(0);
-
-	    this->cache.push_back(0);
 	}
 }
 
@@ -136,28 +159,12 @@ vector<double> Network::get_deltas(vector<double> &input, vector<double> const &
             o[i] = unrelu(o[i]);
     }
 
-    //sets the derivative needed for activation functions of hidden and output
-    double (*dOut)(double x);
-    double (*dHidden)(double x);
-    if (this->actFunHidden == relu)
-        dHidden = d_relu;
-    if (this->actFunHidden == sigmoid)
-        dHidden = d_sigmoid;
-    if (this->actFunHidden == linear)
-        dHidden = d_linear;
-    if (this->actFunOut == linear)
-        dOut = d_linear;
-    if (this->actFunOut == sigmoid)
-        dOut = d_sigmoid;
-    if (this->actFunOut == relu)
-        dOut = d_relu;
-
     vector<double>::iterator w, d;
 
     //calculate deltas for output layer
     vector<double> delta(this->hiddenLayers * this->numHidden + this->outputs);
     for (int i = 0; i < this->outputs; i++){
-        delta[i + this->hiddenLayers * this->numHidden] = dOut(o[i]) * (o[i] - target[i]);
+        delta[i + this->hiddenLayers * this->numHidden] = this->dOut(o[i]) * (o[i] - target[i]);
     }
 
     //calculate deltas for hidden layers if any
@@ -175,12 +182,12 @@ vector<double> Network::get_deltas(vector<double> &input, vector<double> const &
 
             //doing this calculation now to keep hidden all deltas in the same format
             //(makes it easier when changing weights)
-            delta[this->numHidden * (i - 1) + j] *= dHidden(h[this->numHidden * (i - 1) + j]);
+            delta[this->numHidden * (i - 1) + j] *= this->dHidden(h[this->numHidden * (i - 1) + j]);
         }
     }
 
     if(!initDelta.empty()){
-        for(int i = 0; i < delta.size(); i++)
+        for(int i = 0; i < delta.size(); i++) //accumulating deltas for batch updating
             delta[i] += initDelta[i];
     }
 
@@ -190,19 +197,18 @@ vector<double> Network::get_deltas(vector<double> &input, vector<double> const &
 //init must be size of totalWeights, weight updates will be added to this vector
 // Must have deltas before updating weights
 void Network::weight_updates(vector<double> &input, vector<double> const &delta){
-    vector<double>::iterator w, cache, n;
+    vector<double>::iterator w, n;
+    int index;
     
     //delta is set up so that hidden layer neurons comes first,
     //then any other hidden layer's neurons, then output neurons last
 
     /* updating weights to output layer */
 
-    //first weight (and cache) (starting with the bias) to the first delta in output layer
-    w = this->weights.begin() + (this->hiddenLayers ? (this->inputs + 1) * this->numHidden + 
+    //first weight (starting with the bias) to the first delta in output layer
+    index = (this->hiddenLayers ? (this->inputs + 1) * this->numHidden + 
         (this->numHidden + 1) * this->numHidden * (this->hiddenLayers - 1) : 0);
-
-    cache = this->cache.begin() + (this->hiddenLayers ? (this->inputs + 1) * this->numHidden + 
-        (this->numHidden + 1) * this->numHidden * (this->hiddenLayers - 1) : 0);
+    w = this->weights.begin() + index;
 
     //first neuron in the previous layer
     n = (this->hiddenLayers ? this->hiddenNeurons.begin() + (this->numHidden * (this->hiddenLayers - 1)) : input.begin());
@@ -212,7 +218,6 @@ void Network::weight_updates(vector<double> &input, vector<double> const &delta)
         for (int j = 0; j < (this->hiddenLayers ? this->numHidden : this->inputs) + 1; j++){
             if (j == 0){
                 dx = delta[this->numHidden * this->hiddenLayers + i];
-                //RMSProp calculations with weight update
                 *cache = DECAYRATE * (*cache) + (1 - DECAYRATE) * pow(dx, 2);
                 *w++ += -LR * dx / (sqrt(*cache++) + EPS);
             }
@@ -340,6 +345,20 @@ void Network::load(char const location[])
         >> this->outputs >> funHidden >> funOut >> this->totalWeights;
     this->actFunHidden = actFun[funHidden];
     this->actFunOut = actFun[funOut];
+
+    //sets the derivative needed for activation functions of hidden and output
+    if (this->actFunHidden == relu)
+        this->dHidden = d_relu;
+    if (this->actFunHidden == sigmoid)
+        this->dHidden = d_sigmoid;
+    if (this->actFunHidden == linear)
+        this->dHidden = d_linear;
+    if (this->actFunOut == linear)
+        this->dOut = d_linear;
+    if (this->actFunOut == sigmoid)
+        this->dOut = d_sigmoid;
+    if (this->actFunOut == relu)
+        this->dOut = d_relu;
 
     //clear current values of each vector, then repopulate them
     this->weights.clear();

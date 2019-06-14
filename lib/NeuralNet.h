@@ -15,7 +15,7 @@ using std::cerr;
 using std::fstream;
 using std::string;
 
-//parameters for updating weights (uses RMSProp algorithm)
+//parameters for updating weights
 #define LR .01
 #define DECAYRATE .9
 #define EPS .000001
@@ -24,7 +24,7 @@ class Network {
 public:
     // constructs a new network based on parameters
     Network(int inputs, int hiddenLayers, int numHidden,
-    int outputs, double(*actHidden)(double x), double(*actOut)(double x));
+    int outputs, double(*actHidden)(double x), double(*actOut)(double x), double(Network::*optimizer)(double dx, int index) = adam);
     Network(char const location[]); // constructs network from a save file
     ~Network(); // destructor for a network
 
@@ -38,9 +38,16 @@ public:
 
 private:
     int inputs, hiddenLayers, numHidden, outputs, totalWeights; // total # of each value
-    vector<double> cache, hiddenNeurons, weights; // stores real values of each
+    vector<double> vcache, mcache, hiddenNeurons, weights; // stores real values of each
     double(*actFunOut)(double x); // neuron activation function for the output
+    double(*dOut)(double x); // derivative of the output activation function
     double(*actFunHidden)(double x); // neuron activation function of the hidden layers
+    double(*dHidden)(double x); // derivative of the hidden neuron activation function
+    double(Network::*optimizer)(double dx, int index); // gradient decent optimizer for weight updates
+
+    //gradient decent optimizers
+    double rms_prop(double dx, int index);
+    double adam(double dx, int index);
 
     // gets the weight updates for input and target output then returns them
     void weight_updates(vector<double> &input, vector<double> const &deltas = {});
@@ -50,6 +57,7 @@ private:
 };
 
 typedef double (*Function)(double x);
+typedef double (*Function)(double dx, int index);
 
 //acivation functions and their derivatives
 //relu gives values [0, infinity] while sigmoid gives [0, 1]
@@ -63,4 +71,4 @@ double unrelu(double x);
 double linear(double x);
 double d_linear(double x);
 
-#endif // NerualNet.h
+#endif
