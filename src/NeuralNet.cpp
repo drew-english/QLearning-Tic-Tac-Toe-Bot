@@ -218,13 +218,11 @@ void Network::weight_updates(vector<double> &input, vector<double> const &delta)
         for (int j = 0; j < (this->hiddenLayers ? this->numHidden : this->inputs) + 1; j++){
             if (j == 0){
                 dx = delta[this->numHidden * this->hiddenLayers + i];
-                *cache = DECAYRATE * (*cache) + (1 - DECAYRATE) * pow(dx, 2);
-                *w++ += -LR * dx / (sqrt(*cache++) + EPS);
+                *w++ += this->optimizer(dx, index++);
             }
             else{
                 dx = delta[this->numHidden * this->hiddenLayers + i] * n[j - 1];
-                *cache = DECAYRATE * (*cache) + (1 - DECAYRATE) * pow(dx, 2);
-                *w++ += -LR * dx / (sqrt(*cache++) + EPS);
+                *w++ += this->optimizer(dx, index++);
             }
         }
     }
@@ -233,11 +231,9 @@ void Network::weight_updates(vector<double> &input, vector<double> const &delta)
 
     for (int i = this->hiddenLayers; i > 0; i--){
         //first weight (and cache) (starting with bias) to the delta in current layer
-        w = this->weights.begin() + ((i == 1 ? 0 : 1) * (this->inputs + 1) * this->numHidden) +
+        index = ((i == 1 ? 0 : 1) * (this->inputs + 1) * this->numHidden) +
             ((i == 1 ? 0 : i - 2) * (this->numHidden + 1) * this->numHidden);
-
-        cache = this->cache.begin() + ((i == 1 ? 0 : 1) * (this->inputs + 1) * this->numHidden) +
-                ((i == 1 ? 0 : i - 2) * (this->numHidden + 1) * this->numHidden);
+        w = this->weights.begin() + index;
                 
         //first neuron in previous layer
         n = (i == 1 ? input.begin() : this->hiddenNeurons.begin() + (this->numHidden * (i - 2)));
@@ -246,13 +242,11 @@ void Network::weight_updates(vector<double> &input, vector<double> const &delta)
             for (int k = 0; k < (i == 1 ? this->inputs : this->numHidden) + 1; k++){
                 if (k == 0){
                     dx = delta[this->numHidden * (i - 1) + j];
-                    *cache = DECAYRATE * (*cache) + (1 - DECAYRATE) * pow(dx, 2);
-                    *w++ += -LR * dx / (sqrt(*cache++) + EPS);
+                    *w++ += this->optimizer(dx, index++);
                 }
                 else{
                     dx = delta[this->numHidden * (i - 1) + j] * n[k - 1];
-                    *cache = DECAYRATE * (*cache) + (1 - DECAYRATE) * pow(dx, 2);
-                    *w++ += -LR * dx / (sqrt(*cache++) + EPS);
+                    *w++ += this->optimizer(dx, index++);
                 }
             }
         }
@@ -337,7 +331,7 @@ void Network::load(char const location[])
     catch (const char *msg)
     { cerr << "Error while loading network: " << msg << endl; }
 
-    Function actFun[3] = {sigmoid, relu, linear};
+    ActFun actFun[3] = {sigmoid, relu, linear};
     int funHidden, funOut;
 
     //read in all network parameters
@@ -362,10 +356,10 @@ void Network::load(char const location[])
 
     //clear current values of each vector, then repopulate them
     this->weights.clear();
-    this->cache.clear();
+    this->vcache.clear();
+    this->mcache.clear();
     this->hiddenNeurons.clear();
 
-    this->cache.resize(this->totalWeights, 0);
     this->hiddenNeurons.resize(this->hiddenLayers * this->numHidden, 0);
     
     double temp;

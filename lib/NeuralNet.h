@@ -43,7 +43,7 @@ private:
     double(*dOut)(double x); // derivative of the output activation function
     double(*actFunHidden)(double x); // neuron activation function of the hidden layers
     double(*dHidden)(double x); // derivative of the hidden neuron activation function
-    double(Network::*optimizer)(double dx, int index); // gradient decent optimizer for weight updates
+    double(optimizer)(double dx, int index); // gradient decent optimizer for weight updates
 
     //gradient decent optimizers
     double rms_prop(double dx, int index);
@@ -56,13 +56,15 @@ private:
     vector<double> get_deltas(vector<double> &input, vector<double> const &target, vector<double> const &initDelta = {});
 };
 
-typedef double (*Function)(double x);
-typedef double (*Function)(double dx, int index);
+typedef double (*ActFun)(double x); // activation function type
+typedef double (*OptFun)(double dx, int index); // optimizer function type
+
 
 //acivation functions and their derivatives
 //relu gives values [0, infinity] while sigmoid gives [0, 1]
 //sigmoid is usually better for probabilities while relu is usually better for real values
 //linear for range of real valued outputs
+
 double sigmoid(double x);
 double d_sigmoid(double x);
 double relu(double x);
