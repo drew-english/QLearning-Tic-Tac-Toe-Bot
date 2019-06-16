@@ -106,8 +106,15 @@ Network::Network(int inputs, int hiddenLayers, int numHidden,
 	}
 }
 
-Network::Network(char const location[])
-{ this->load(location); }
+//Reads network parameters from a file locaction and inits optimizer vars
+Network::Network(char const location[]){ 
+    this->load(location);
+
+    numBatches = 0;
+    vcache = vector<double>(this->totalWeights, 0);
+    if(optimizer == adam)
+        mcache = vector<double>(this->totalWeights, 0); // only need mcache for adam
+}
 
 //no memory is dynamically allocated, besides when inserting into the vector containers
 // which is then taken care of by their class.
