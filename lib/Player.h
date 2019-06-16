@@ -56,7 +56,6 @@ private:
     void network_fit(vector<Transition> const &miniBatch); // updates the network based on a minibatch of transitions
     void train_move(TicTacToe &game); // Network move for training
     void notrain_move(TicTacToe &game); // Network move for normal game
-
 };
 
 
