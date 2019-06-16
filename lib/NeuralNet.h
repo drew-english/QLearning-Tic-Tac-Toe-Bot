@@ -15,16 +15,26 @@ using std::cerr;
 using std::fstream;
 using std::string;
 
-//parameters for updating weights
-#define LR .01
-#define DECAYRATE .9
-#define EPS .000001
+//RMSProp hyperparameters
+#define RMSLR .01
+#define RMSDECAY .9
+#define RMSEPS .000001
+
+//Adam hyperparameters
+#define ADAMLR .01
+#define ADAMB1 .9
+#define ADAMB2 .999
+#define ADAMEPS .0000001
+
+//gradient decent optimizers
+double rms_prop(double dx, int index);
+double adam(double dx, int index);
 
 class Network {
 public:
     // constructs a new network based on parameters
     Network(int inputs, int hiddenLayers, int numHidden,
-    int outputs, double(*actHidden)(double x), double(*actOut)(double x), double(Network::*optimizer)(double dx, int index) = adam);
+    int outputs, double(*actHidden)(double x), double(*actOut)(double x), double(*optimizer)(double dx, int index) = adam);
     Network(char const location[]); // constructs network from a save file
     ~Network(); // destructor for a network
 
@@ -38,16 +48,13 @@ public:
 
 private:
     int inputs, hiddenLayers, numHidden, outputs, totalWeights; // total # of each value
-    vector<double> vcache, mcache, hiddenNeurons, weights; // stores real values of each
+    vector<double> hiddenNeurons, weights; // stores real values of each
     double(*actFunOut)(double x); // neuron activation function for the output
     double(*dOut)(double x); // derivative of the output activation function
     double(*actFunHidden)(double x); // neuron activation function of the hidden layers
     double(*dHidden)(double x); // derivative of the hidden neuron activation function
-    double(optimizer)(double dx, int index); // gradient decent optimizer for weight updates
+    double(*optimizer)(double dx, int index); // gradient decent optimizer for weight updates
 
-    //gradient decent optimizers
-    double rms_prop(double dx, int index);
-    double adam(double dx, int index);
 
     // gets the weight updates for input and target output then returns them
     void weight_updates(vector<double> &input, vector<double> const &deltas = {});
@@ -58,7 +65,6 @@ private:
 
 typedef double (*ActFun)(double x); // activation function type
 typedef double (*OptFun)(double dx, int index); // optimizer function type
-
 
 //acivation functions and their derivatives
 //relu gives values [0, infinity] while sigmoid gives [0, 1]

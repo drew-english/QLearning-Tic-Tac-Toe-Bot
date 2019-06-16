@@ -1,4 +1,6 @@
 #include "../lib/NeuralNet.h"
+static vector<double> vcache, mcache; // cache variables for descent optimizer functions
+static int numBatches; // nuber of batch updates ran (for adam optimizer)
 
 //Activation funcitons:
 double sigmoid(double x)
@@ -23,18 +25,27 @@ double d_linear(double x)
 {	return 1; }
 
 //RMSProp gradient descent optimizer
-double Network::rms_prop(double dx, int index){
-    if(this->vcache.empty()) // initialize the cache if it's empty
-        this->vcache = vector<double>(this->totalWeights, 0);
-    
+double rms_prop(double dx, int index){
+    //cache initialized in the network constructor
+
     vector<double>::iterator c = vcache.begin() + index; // points to the correct spot in cache
-    *c = DECAYRATE * (*c) + (1 - DECAYRATE) * pow(dx, 2);
-    return -LR * dx / (sqrt(*c) + EPS);
+    *c = RMSDECAY * (*c) + (1 - RMSDECAY) * pow(dx, 2);
+    return -RMSLR * dx / (sqrt(*c) + RMSEPS);
 }
 
+double adam(double dx, int index){
+    // Cache and numBatches initialzed in network constructor
+    
+    vector<double>::iterator v = vcache.begin() + index, m = mcache.begin() + index;
+    *m = ADAMB1 * (*m) + (1 - ADAMB1) * dx;
+    *v = ADAMB2 * (*v) + (1 - ADAMB2) * pow(dx, 2);
+    double mHat = *m / (1 - pow(ADAMB1, numBatches));
+    double vHat = *v / (1 - pow(ADAMB2, numBatches));
+    return -ADAMLR * mHat / (sqrt(vHat) + ADAMEPS);
+}
 
 Network::Network(int inputs, int hiddenLayers, int numHidden,
-    int outputs, double(*actHidden)(double x), double(*actOut)(double x), double(Network::*optimizer)(double dx, int index)){
+    int outputs, double(*actHidden)(double x), double(*actOut)(double x), double(*optimizer)(double dx, int index)){
     //checks to make sure fucntion arguments are valid
     try {
         if (inputs <= 0)
@@ -65,6 +76,7 @@ Network::Network(int inputs, int hiddenLayers, int numHidden,
     this->actFunHidden = actHidden;
     this->actFunOut = actOut;
     this->optimizer = optimizer;
+    numBatches = 0;
 
     //sets the derivative needed for activation functions of hidden and output
     if (this->actFunHidden == relu)
@@ -79,6 +91,10 @@ Network::Network(int inputs, int hiddenLayers, int numHidden,
         this->dOut = d_sigmoid;
     if (this->actFunOut == relu)
         this->dOut = d_relu;
+
+    vcache = vector<double>(this->totalWeights, 0);
+    if(optimizer == adam)
+        mcache = vector<double>(this->totalWeights, 0); // only need mcache for adam
 
     for (int i = 0; i < this->totalWeights; i++){ // randomly setting weights
 		this->weights.push_back(1 * ((double)rand() / (double)RAND_MAX));
@@ -263,6 +279,7 @@ void Network::batch_fit(vector<vector<double>> &input, vector<vector<double>> co
     vector<double> deltas(this->hiddenLayers * this->numHidden + this->outputs, 0);
     vector<double> avgIn(input[0].size(), 0);
     
+    numBatches++; // update number increment for adam 
     for(int i = 0; i < input.size(); i++){
         deltas = get_deltas(input[i], target[i], deltas); // summation of deltas from all inputs and targets
         for(int j = 0; j < input[i].size(); j++)
@@ -284,7 +301,7 @@ void Network::batch_fit(vector<vector<double>> &input, vector<vector<double>> co
 
 void Network::save(char const location[])
 {
-    int funHidden = 0, funOut = 0;
+    int funHidden = 0, funOut = 0, opt = 0;
 
     //establish file stream, error check, and print network information
     fstream out(location);
@@ -310,8 +327,12 @@ void Network::save(char const location[])
         funOut = 1;
     if (this->actFunOut == linear)
         funOut = 2;
+    if (this->optimizer == adam)
+        opt = 0;
+    if (this->optimizer == rms_prop)
+        opt = 1;
 
-    out << funHidden << " " << funOut << endl
+    out << funHidden << " " << funOut << " " << optimizer << endl
         << this->totalWeights << endl;
 
     for(int i = 0; i < this->totalWeights; i++)
@@ -332,13 +353,15 @@ void Network::load(char const location[])
     { cerr << "Error while loading network: " << msg << endl; }
 
     ActFun actFun[3] = {sigmoid, relu, linear};
-    int funHidden, funOut;
+    OptFun optFun[2] = {adam, rms_prop};
+    int funHidden, funOut, opt;
 
     //read in all network parameters
     in >> this->inputs >> this->hiddenLayers >> this->numHidden
-        >> this->outputs >> funHidden >> funOut >> this->totalWeights;
+        >> this->outputs >> funHidden >> funOut >> opt >> this->totalWeights;
     this->actFunHidden = actFun[funHidden];
     this->actFunOut = actFun[funOut];
+    this->optimizer = optFun[opt];
 
     //sets the derivative needed for activation functions of hidden and output
     if (this->actFunHidden == relu)
@@ -356,8 +379,8 @@ void Network::load(char const location[])
 
     //clear current values of each vector, then repopulate them
     this->weights.clear();
-    this->vcache.clear();
-    this->mcache.clear();
+    vcache.clear();
+    mcache.clear();
     this->hiddenNeurons.clear();
 
     this->hiddenNeurons.resize(this->hiddenLayers * this->numHidden, 0);
