@@ -27,7 +27,7 @@ NNPlayer::NNPlayer(Network *net, bool training, int minibatchSize, int replaySiz
     this->rewardWin = 30;
     this->rewardLoss = -30;
     this->rewardValidMove = 0;
-    this->rewardDraw = 0;
+    this->rewardDraw = 5;
     this->miniBatch = vector<Transition>(minibatchSize);
     this->net = net;
 }
@@ -173,7 +173,12 @@ void NNPlayer::train_move(TicTacToe &game){
 
 //picks the move with the highest qval based on the state
 void NNPlayer::notrain_move(TicTacToe &game){
-    game.makeMove(argmax(this->net->run(get_input(game))) + 1);
+    vector<double> qvals, probs;
+    vector<int> possibleMoves;
+
+    qvals = this->net->run(get_input(game));
+    probs = get_probs(game, qvals, possibleMoves);
+    game.makeMove(argmax(probs) + 1);
 }
 
 void NNPlayer::final_reward(int outcome){
@@ -182,10 +187,10 @@ void NNPlayer::final_reward(int outcome){
             replays[(moves - 1) % replaySize].reward = this->rewardWin;
             break;
         case 0:
-            replays[(moves - 1) % replaySize].reward = this->rewardWin;
+            replays[(moves - 1) % replaySize].reward = this->rewardDraw;
             break;
         case -1:
-            replays[(moves - 1) % replaySize].reward = this->rewardWin;
+            replays[(moves - 1) % replaySize].reward = this->rewardLoss;
             break;
         default:
             break;
