@@ -17,8 +17,9 @@ public:
     void nextTurn(); // iterates to the next player
     bool makeMove(int pos); // makes a new move with current player based on position argument
     int getMove(); // gets a move from the user
-    bool checkWin(); // checks for a win with current player
-   
+    bool checkWin(std::vector<int> board = {}); // checks for a win with current player (if no arg, then use this->board)
+    bool checkDraw(std::vector<int> board = {}); // checks for a draw (if no arg, then use this->board)
+
 private:
     std::vector<int> board; // stores information about the state of the game (1 is X's, 0 is O's, 2 is blank)
     int curPlayer; // stores which players turn it is (1 is player 1, 0 is player 2)
