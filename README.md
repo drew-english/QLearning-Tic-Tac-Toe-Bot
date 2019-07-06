@@ -11,7 +11,8 @@ This project is an attempt at using a neural network (from my Cpp-Neural-Net pro
 The input layer consists of 27 neurons. This is because there are 3 states (X, O, or blank) for each of the 9 positions on the Tic-Tac-Toe board. The input array is fed into the network such that the first 9 places are the positions of the X's, the second 9 are the position of the O's, and the last 9 are the position of the blanks.
 <p>
   <img src="/imgs/ExampleBoard.png" width="250" height="350" align="left">
-  Corresponding input: <img src="/imgs/ExampleInput.png" width="350" height="75" align="right">
+  Corresponding input: 
+  <img src="/imgs/ExampleInput.png" width="350" height="75" align="right">
 </p>
 
 #### Hidden Layers
