@@ -8,9 +8,9 @@ This project is an attempt at using a neural network (from my Cpp-Neural-Net pro
 
 #### Input Layer
 
-The input layer consists of 27 neurons. This is because there are 3 states (X, O, or blank) for each of the 9 positions on the Tic-Tac-Toe board. The input is fed into the network such that the first 3 inputs denote the state of the top left position on the Tic-Tac-Toe board, the next 3 inputs denote the state of the top middle of the board, and so on.
+The input layer consists of 27 neurons. This is because there are 3 states (X, O, or blank) for each of the 9 positions on the Tic-Tac-Toe board. The input array is fed into the network such that the first 9 places are the positions of the X's, the second 9 are the position of the O's, and the last 9 are the position of the blanks.
 
-![Example Board](/path/to/image)	Corresponding input
+![Example Board](/imgs/ExampleBoard.png)	![Corresponding input](/imgs/ExampleInput.png)
 
 #### Hidden Layers
 
@@ -19,7 +19,6 @@ There is only one hidden layer that consists of 243 neurons (9 times the number 
 #### Output Layer
 
 The output layer consists of 9 neurons, one for each position of the board, which are fully connected to the hidden layer. The activation function for these neurons is Linear, so the network can approximate the Q-Value of making a move at each position.
-
 
 The gradient descent optimizer chosen for training was [ADAM](https://github.com/drew-english/QLearning-Tic-Tac-Toe-Bot/blob/e50e1a24c950c31653f7213132fd029d4d23f2dd/src/NeuralNet.cpp#L36-L45), as it proved to be better for finding a minima during gradient descent than [RMSProp](https://github.com/drew-english/QLearning-Tic-Tac-Toe-Bot/blob/e50e1a24c950c31653f7213132fd029d4d23f2dd/src/NeuralNet.cpp#L28-L34). The hyperparameters can be found [here](https://github.com/drew-english/QLearning-Tic-Tac-Toe-Bot/blob/e50e1a24c950c31653f7213132fd029d4d23f2dd/lib/NeuralNet.h#L23-L27).
 
@@ -48,6 +47,3 @@ Display graphs for learning vs Random player and learning vs Min-Max player
 * **Drew English** - [DrewEnglish](https://github.com/drew-english)
 
 ## Acknowledgments
-
-* Hat tip
-* Inspiration
