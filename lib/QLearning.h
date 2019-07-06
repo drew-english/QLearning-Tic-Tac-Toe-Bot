@@ -189,33 +189,9 @@ namespace QLearning{
     }
 
 
-    void run_test(){
-        Network net(27, 1, 243, 9, relu, linear);
-        NNPlayer netPlayer(&net, true);
-        MINMAXPlayer mmp;
-        RANDPlayer rp;
-
-        //Train in different scenarios, output to 
-        vector<vector<double>> result = QLearning::train(&netPlayer, &rp);
-        QLearning::write_res("testdata/NET-RP.data", result);
-        
-        net = Network(27, 1, 243, 9, relu, linear);
-        netPlayer = NNPlayer(&net, true);
-
-        result = QLearning::train(&rp, &netPlayer);
-        QLearning::write_res("testdata/RP-NET.data", result);
-
-        net = Network(27, 1, 243, 9, relu, linear);
-        netPlayer = NNPlayer(&net, true);
-
-        result = QLearning::train(&netPlayer, &mmp);
-        QLearning::write_res("testdata/NET-MMP.data", result);
-
-        net = Network(27, 1, 243, 9, relu, linear);
-        netPlayer = NNPlayer(&net, true);
-
-        result = QLearning::train(&mmp, &netPlayer);
-        QLearning::write_res("testdata/MMP-NET.data", result);
+    void run_test(Player *p1, Player *p2, string saveLocation){
+        vector<vector<double>> result = QLearning::train(p1, p2);
+        QLearning::write_res(saveLocation, result);
     }
 }
 
