@@ -12,7 +12,7 @@ void inthand(int signum){
     stop = 1;
 }
 
-#define EPISODES 10
+#define EPISODES 100
 #define GAMES 100 // # of games per episode
 
 using std::vector;
@@ -178,7 +178,7 @@ namespace QLearning{
 
         try {
             if(!f.is_open()) // check to see if open successfully
-            throw("File was not opened successfully");
+                throw("File was not opened successfully");
         }
         catch(const char *msg)
         { cerr << "Error while writing results: " << msg << endl;  }
