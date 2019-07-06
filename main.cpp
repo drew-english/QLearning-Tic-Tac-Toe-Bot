@@ -9,7 +9,10 @@ int main(int argc, char *argv[])
 {
     srand(time(NULL)); // initializes random seed
 
-    QLearning::run_test();
-
+    Network net(27, 1, 243, 9, relu, linear);
+    NNPlayer netPlayer(&net, true);
+    MINMAXPlayer mmp;
+    
+    QLearning::run_test(&mmp, &netPlayer, "testdata/MMP-NET(1).data");
     return 0;
 }
