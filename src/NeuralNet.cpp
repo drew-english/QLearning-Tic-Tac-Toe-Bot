@@ -322,6 +322,7 @@ void Network::save(char const location[])
     out << this->inputs << " " << this->hiddenLayers << " " <<
         this->numHidden << " " << this->outputs<< endl;
 
+    // chooses correct number to represent the hidden neuron, output neuron, and optimizer functions
     if (this->actFunHidden == sigmoid)
         funHidden = 0;
     if (this->actFunHidden == relu)
@@ -342,6 +343,7 @@ void Network::save(char const location[])
     out << funHidden << " " << funOut << " " << optimizer << endl
         << this->totalWeights << endl;
 
+    //writes all weight values to the file
     for(int i = 0; i < this->totalWeights; i++)
         out << this->weights[i] << endl;
 
@@ -359,6 +361,7 @@ void Network::load(char const location[])
     catch (const char *msg)
     { cerr << "Error while loading network: " << msg << endl; }
 
+    //arrays of functions
     ActFun actFun[3] = {sigmoid, relu, linear};
     OptFun optFun[2] = {adam, rms_prop};
     int funHidden, funOut, opt;
@@ -392,6 +395,7 @@ void Network::load(char const location[])
 
     this->hiddenNeurons.resize(this->hiddenLayers * this->numHidden, 0);
     
+    //reads all weight values to network
     double temp;
     for(int i = 0; i < this->totalWeights; i++){
         in >> temp;

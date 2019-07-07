@@ -40,8 +40,8 @@ public:
 
     vector<double> run(vector<double> const &input); //computes the given output of the network from the input
     void fit(vector<double> &input, vector<double> const &target); //Updates the weights of the nework based on the paramters
-    void save(char const location[]);
-    void load(char const location[]);
+    void save(char const location[]); // saves all of network data to a file
+    void load(char const location[]); // loads network data from a file
     
     //takes multiple inputs and outputs the performs a batch update
     void batch_fit(vector<vector<double>> &input, vector<vector<double>> const &target);

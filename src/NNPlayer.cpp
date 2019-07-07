@@ -107,7 +107,7 @@ int NNPlayer::execute_move(TicTacToe &game, int action){
     return reward;
 }
 
-
+// Calculate the target output for each replay in the minibatch, then fits the network with the minibatch
 void NNPlayer::network_fit(vector<Transition> const &miniBatch){
     vector<vector<double>> input, tout;
     vector<double> target;
@@ -181,6 +181,7 @@ void NNPlayer::notrain_move(TicTacToe &game){
     game.makeMove(argmax(probs) + 1);
 }
 
+// Applies the correct reward to the previous move based on the outcome of the game
 void NNPlayer::final_reward(int outcome){
     switch(outcome){
         case 1:
@@ -197,7 +198,7 @@ void NNPlayer::final_reward(int outcome){
     }
 }
 
-
+// returns the output of the network based on the game state
 vector<double> NNPlayer::get_qvals(TicTacToe &game){
     return net->run(get_input(game));
 }

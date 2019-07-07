@@ -21,6 +21,7 @@ using std::cout;
 namespace QLearning{
     int winsp1 = 0, winsp2 = 0, draws = 0;
 
+    // checks for the end of a game, passes results to netPlayer if there is one
     bool check_end(TicTacToe &game, NNPlayer *netPlayer, bool isNetPlayer, int p){
         if(game.checkWin()){
             p == 1 ? winsp1++ : winsp2++;
@@ -48,7 +49,7 @@ namespace QLearning{
     }
 
 
-    // 2 players play aginst eachother, returns results of training session
+    // 2 players play aginst eachother for EPISODES * GAMES, returns results of training session
     vector<vector<double>> train(Player *p1, Player *p2){
         vector<vector<double>> totalRes; // results of every epoch
         
@@ -178,11 +179,11 @@ namespace QLearning{
         { cerr << "Error while writing results: " << msg << endl;  }
 
         for(int i = 0; i < res.size(); i++){ // each epoch
-            f << res[i][0] << ", " << res[i][1] << ", " << res[i][2] << endl; 
+            f << res[i][0] << ", " << res[i][1] << ", " << res[i][2] << endl; // comma separated percentages for each players wins
         }
     }
 
-
+    //runs a training session for the 2 players, then writes the results to saveLocation
     void run_test(Player *p1, Player *p2, string saveLocation){
         vector<vector<double>> result = QLearning::train(p1, p2);
         QLearning::write_res(saveLocation, result);

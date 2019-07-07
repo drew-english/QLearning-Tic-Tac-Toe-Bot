@@ -74,6 +74,7 @@ void TicTacToe::printBoard()
 vector<int> TicTacToe::getBoard() const
 {  return this->board;  }
 
+// Makes a move base on the position, returns false if invalid move
 //pos is 1-9 position listed on printed board
 bool TicTacToe::makeMove(int pos)
 {
@@ -84,6 +85,7 @@ bool TicTacToe::makeMove(int pos)
     else return false;
 }
 
+//gets a move from the user
 int TicTacToe::getMove()
 {
     int move;
@@ -102,6 +104,7 @@ int TicTacToe::getMove()
 void TicTacToe::nextTurn()
 {  ++this->curPlayer %= 2;  }
 
+// checks to see if the game has been won
 bool TicTacToe::checkWin(vector<int> board)
 {
     //check along rows:
@@ -156,6 +159,7 @@ bool TicTacToe::checkWin(vector<int> board)
     return false; // no win conditions were met
 }
 
+// checks to see if the game has ended in a draw
 bool TicTacToe::checkDraw(vector<int> board){
     for(int i = 0; i < 9; i++){
         if((board.empty() ? this->board : board)[i] == 2)
