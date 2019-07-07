@@ -108,20 +108,15 @@ namespace QLearning{
 
 
     //Lets user play against a network player, also displays the qvals the network outputs
-    void playGame(NNPlayer netPlayer){
+    void playGame(Player *p){
         TicTacToe game;
         int player = 0;
-        vector<int> possibleMoves = {0, 1, 2, 3, 4, 5, 6, 7, 8}; // possible moves
-        vector<double> qvals = netPlayer.get_qvals(game);
 
         while(true){
             system("cls");
-            
             game.printBoard(); // show user the current board
             cout << endl;
-            for(int i = 0; i < 9; i++){
-                cout << qvals[i] << endl;
-            }
+            
             //Player's turn
             int move = game.getMove(); // get a move 
             while(!game.makeMove(move)){ // validate space is open (make the move if it is)
@@ -138,14 +133,13 @@ namespace QLearning{
             else
                 game.nextTurn();
 
-            //Network's turn
-            vector<double> qvals = netPlayer.get_qvals(game);
-            netPlayer.move(game);
-            
+            //Other players turn
+            p->move(game);            
             if(game.checkWin()){ // if there is a winner then break the game loop, else next move
                 player = 1;
                 break;
             }
+
             else if(game.checkDraw()){
                 player = 2;
                 break;
