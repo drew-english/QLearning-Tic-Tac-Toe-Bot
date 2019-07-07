@@ -8,10 +8,8 @@ This project is an attempt at using a neural network (from my Cpp-Neural-Net pro
 
 #### Input Layer
 
-The input layer consists of 27 neurons. This is because there are 3 states (X, O, or blank) for each of the 9 positions on the Tic-Tac-Toe board. The input array is fed into the network such that the first 9 places are the positions of the X's, the second 9 are the position of the O's, and the last 9 are the position of the blanks.
-<img src="/imgs/ExampleBoard.png" width="250" height="350" align="left">
-<p> Corresponding input: </p> 
-<img src="/imgs/ExampleInput.png" width="350" height="75" align="right">
+The input layer consists of 27 neurons. This is because there are 3 states (X, O, or blank) for each of the 9 positions on the Tic-Tac-Toe board. The input array is fed into the network such that the first 9 places are the positions of the X's, the second 9 are the position of the O's, and the last 9 are the position of the blanks. Example:
+<img src="imgs/inputExample.png">
 
 #### Hidden Layers
 
@@ -26,6 +24,8 @@ The gradient descent optimizer chosen for training was [ADAM](https://github.com
 
 ### Training the Network
 
+#### Process
+
 #### The Competition
 
 To train the network we need something to play against! In comes the Random player and the Min-Max player. The [Random player](https://github.com/drew-english/QLearning-Tic-Tac-Toe-Bot/blob/master/src/RANDPlayer.cpp) follows its name and picks a random open position on the board each time. However, the [Min-Max player](https://github.com/drew-english/QLearning-Tic-Tac-Toe-Bot/blob/master/src/MINMAXPlayer.cpp) is a little smarter than the Random player. It assigns a score to each possible move by exploring every move available left in the game, and it will get these scores after it reaches an end-game state. After an end-game state is reached, the scores (1 for win, -1 for loss, and 0 for draw) are propagated back up to the original state (assuming we will choose the move to maximize the score and the other player will choose the move that minimizes our score) where we can then make our move. This process is inefficient as every possible move needs to be explored, but it makes the best move possible every time. A perfect player.
@@ -36,12 +36,12 @@ To make the Min-Max player more efficient we stored moves in a hash map, so if i
 To train a network so that it could play well versus a human, it needs to be trained such that it can play well against a diverse set of strategies. This is where the competition steps in, we have a Random player to train the network how to play against odd strategies, and a Min-Max player for learning to play against optimal strategies.
 
 #### Testing
-All performance tests were conducted by observing learning over 100 epochs, each epoch containing 100 games. Many tests were conducted before finding settling on the hyperparameters (listed above) for the network. Tests were conducted for the network player going first and second, versus both the Random player and the Min-Max player.
+All performance tests were conducted by observing learning over many epochs, each epoch containing 100 games. Many tests were conducted before finding settling on the hyperparameters (listed above) for the network. Tests were conducted for the network player going first and second, versus both the Random player and the Min-Max player.
 
 
 ## Results
 
-Display graphs for learning vs Random player and learning vs Min-Max player
+Here you can see the effectiveness of the network's ability to learn in 4 different situations. The graphs show the network going first and second against both the Random player and the Min-Max player.
 
 ## Authors
 
